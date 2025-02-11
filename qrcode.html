@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wi-Fi QR Code Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+        }
+        input, button {
+            padding: 10px;
+            margin: 5px;
+            font-size: 16px;
+        }
+        #qr-code {
+            margin-top: 20px;
+        }
+
+        /* Print styles */
+        @media print {
+            body {
+                width: 210mm; /* A4 width */
+                height: 297mm; /* A4 height */
+                margin: 0;
+                padding: 0;
+                text-align: center;
+            }
+
+            #printContent {
+                width: 100%;
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                text-align: center;
+            }
+
+            #printContent h2 {
+                font-size: 24px;
+                margin-bottom: 10mm;
+            }
+
+            #printContent img {
+                width: 100mm; /* Medium size QR code */
+                height: auto;
+                margin-top: 20mm; /* Space above the QR code */
+            }
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+</head>
+<body>
+    <h1>Wi-Fi QR Code Generator</h1>
+    <p>Enter your Wi-Fi details to generate a QR code:</p>
+    <input type="text" id="ssid" placeholder="Wi-Fi SSID" /><br>
+    <input type="text" id="password" placeholder="Wi-Fi Password" /><br>
+    <select id="encryption">
+        <option value="WPA">WPA/WPA2</option>
+        <option value="WEP">WEP</option>
+        <option value="">None</option>
+    </select><br>
+    <button onclick="generateWiFiQRCode()">Generate Wi-Fi QR Code</button>
+    <button onclick="printQRCode()" id="printButton" style="display: none;">Print QR Code</button>
+    <div id="qr-code"></div>
+
+    <script>
+        function generateWiFiQRCode() {
+            const ssid = document.getElementById("ssid").value;
+            const password = document.getElementById("password").value;
+            const encryption = document.getElementById("encryption").value;
+            const qrCodeDiv = document.getElementById("qr-code");
+
+            if (!ssid) {
+                qrCodeDiv.innerHTML = "<p>Please enter the Wi-Fi SSID.</p>";
+                return;
+            }
+
+            // Format Wi-Fi string according to the Wi-Fi QR Code standard
+            const wifiString = `WIFI:S:${ssid};T:${encryption};P:${password};;`;
+
+            qrCodeDiv.innerHTML = ""; // Clear any existing QR code
+            QRCode.toDataURL(wifiString, { width: 200 }, function (error, url) { // Set QR code width to 200px for medium size
+                if (error) {
+                    console.error(error);
+                } else {
+                    // Create an image element with the QR code
+                    const img = new Image();
+                    img.src = url;
+                    qrCodeDiv.appendChild(img);
+                    document.getElementById("printButton").style.display = "inline-block"; // Show the print button
+                }
+            });
+        }
+
+        function printQRCode() {
+            const qrCodeDiv = document.getElementById("qr-code");
+            const img = qrCodeDiv.querySelector("img");
+            const ssid = document.getElementById("ssid").value;
+
+            if (img) {
+                // Create a new window for printing
+                const printWindow = window.open('', '', 'height=500,width=500');
+                printWindow.document.write('<html><head><title>Print QR Code</title>');
+                printWindow.document.write('<style>@media print { body { font-family: Arial, sans-serif; text-align: center; width: 210mm; height: 297mm; margin: 0; padding: 0; } #printContent { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; text-align: center; } #printContent img { width: 100mm; height: auto; margin-top: 20mm; } #printContent h2 { font-size: 24px; margin-bottom: 10mm; }</style>');
+                printWindow.document.write('</head><body>');
+                
+                // Create content with SSID name and QR code image
+                printWindow.document.write('<div id="printContent">');
+                printWindow.document.write('<h2>Connect to Wi-Fi: ' + ssid + '</h2>');
+                printWindow.document.write('<img src="' + img.src + '" />');
+                printWindow.document.write('</div>');
+                
+                printWindow.document.write('</body></html>');
+                printWindow.document.close();
+                
+                // Wait for the content to load before calling the print function
+                printWindow.onload = function () {
+                    printWindow.print();
+                };
+            } else {
+                alert("Please generate a QR code first.");
+            }
+        }
+    </script>
+</body>
+</html>
